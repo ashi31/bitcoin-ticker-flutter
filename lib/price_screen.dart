@@ -31,6 +31,7 @@ class _PriceScreenState extends State<PriceScreen> {
         onChanged: (newValue) {
           setState(() {
             selectedCurrency = newValue;
+            getCoinData();
           });
         });
   }
@@ -46,9 +47,42 @@ class _PriceScreenState extends State<PriceScreen> {
     return CupertinoPicker(
         itemExtent: 32.0,
         onSelectedItemChanged: (int selectedIndex) {
-          selectedCurrency = currenciesList[selectedIndex];
+          setState(() {
+            selectedCurrency = currenciesList[selectedIndex];
+            getCoinData();
+          });
         },
         children: pickerItems);
+  }
+
+  Map<String, String> cryptoCurrencyValues = {
+    'BTC': '?',
+    'ETH': '?',
+    'LTC': '?'
+  };
+
+  void getCoinData() async {
+    try {
+      CoinData coinData = CoinData();
+      Map<String, int> exchangeRates =
+      await coinData.getCoinData(selectedCurrency);
+      if (exchangeRates.length != 3) {
+        return;
+      }
+      setState(() {
+        for (String key in cryptoCurrencyValues.keys) {
+          cryptoCurrencyValues[key] = exchangeRates[key].toString();
+        }
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getCoinData();
   }
 
   @override
@@ -62,27 +96,9 @@ class _PriceScreenState extends State<PriceScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0.0),
-            child: Card(
-              color: Colors.lightBlueAccent,
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    vertical: 15.0, horizontal: 28.0),
-                child: Text(
-                  '1 BTC = ? USD',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: cryptoList.map((e) => CryptoCard(e)).toList(),
           ),
           Container(
             height: 150.0,
@@ -92,6 +108,30 @@ class _PriceScreenState extends State<PriceScreen> {
             child: Platform.isIOS ? iOSPicker() : androidDropdownButton(),
           )
         ],
+      ),
+    );
+  }
+
+  Widget CryptoCard(String cryptoCurrency) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0.0),
+      child: Card(
+        color: Colors.lightBlueAccent,
+        elevation: 5.0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
+          child: Text(
+            '1 $cryptoCurrency = ${cryptoCurrencyValues[cryptoCurrency]} $selectedCurrency',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20.0,
+              color: Colors.white,
+            ),
+          ),
+        ),
       ),
     );
   }
