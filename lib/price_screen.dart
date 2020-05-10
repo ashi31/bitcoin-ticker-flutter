@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'coin_data.dart';
@@ -10,16 +13,42 @@ class PriceScreen extends StatefulWidget {
 class _PriceScreenState extends State<PriceScreen> {
   String selectedCurrency = 'USD';
 
-  List<DropdownMenuItem<String>> getDropdownMenuItems() {
+  DropdownButton androidDropdownButton() {
     List<DropdownMenuItem<String>> dropdownMenuItems = currenciesList
         .map(
           (currency) => DropdownMenuItem(
-            child: Text(currency),
-            value: currency,
-          ),
-        )
+        child: Text(
+          currency,
+          style: TextStyle(color: Colors.white),
+        ),
+        value: currency,
+      ),
+    )
         .toList();
-    return dropdownMenuItems;
+    return DropdownButton<String>(
+        value: selectedCurrency,
+        items: dropdownMenuItems,
+        onChanged: (newValue) {
+          setState(() {
+            selectedCurrency = newValue;
+          });
+        });
+  }
+
+  CupertinoPicker iOSPicker() {
+    List<Text> pickerItems = currenciesList
+        .map((e) =>
+        Text(
+          e,
+          style: TextStyle(color: Colors.white),
+        ))
+        .toList();
+    return CupertinoPicker(
+        itemExtent: 32.0,
+        onSelectedItemChanged: (int selectedIndex) {
+          selectedCurrency = currenciesList[selectedIndex];
+        },
+        children: pickerItems);
   }
 
   @override
@@ -60,14 +89,7 @@ class _PriceScreenState extends State<PriceScreen> {
             alignment: Alignment.center,
             color: Colors.lightBlue,
             padding: EdgeInsets.only(bottom: 20.0),
-            child: DropdownButton<String>(
-                value: selectedCurrency,
-                items: getDropdownMenuItems(),
-                onChanged: (newValue) {
-                  setState(() {
-                    selectedCurrency = newValue;
-                  });
-                }),
+            child: Platform.isIOS ? iOSPicker() : androidDropdownButton(),
           )
         ],
       ),
